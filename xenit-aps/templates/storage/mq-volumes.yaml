@@ -1,0 +1,12 @@
+{{- if .Values.mq.enabled}}
+{{- $namespace := .Release.Namespace -}}
+{{- with .Values.persistentStorage.mq }}
+{{- if .enabled}}
+{{- $name := "mq" -}}
+{{- $storageClassName := .storageClassName -}}
+{{- $storage := .storage -}}
+{{- $efsVolumeHandle := .efs.volumeHandle -}}
+{{- include "hepers.volumeHelper" (list $namespace $name $storageClassName $storage $efsVolumeHandle) }}
+{{- end }}
+{{- end }}
+{{- end }}

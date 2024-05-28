@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alfresco-activity-admin
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    app: alfresco-activity-admin
+spec:
+  replicas: {{ .Values.activityAdmin.replicas }}
+  selector:
+    matchLabels:
+      app: alfresco-activity-admin
+  strategy:
+    {{- if eq .Values.activityAdmin.strategy.type "Recreate" }}
+    type: {{ .Values.activityAdmin.strategy.type }}
+    {{- else }}
+    {{ toYaml .Values.general.strategy | nindent 4 }}
+    {{- end }}
+  template:
+    metadata:
+      labels:
+        app: alfresco-activity-admin
+      annotations:
+        checksum/alfresco-activity-admin-config: {{ include (print $.Template.BasePath "/alfresco-activity-admin/alfresco-activity-config.yaml") . | sha256sum }}
+        checksum/db-secret: {{ include (print $.Template.BasePath "/db-secret.yaml") . | sha256sum }}
+    spec:
+      {{- if .Values.activityAdmin.serviceAccount }}
+      serviceAccountName: {{ .Values.activityAdmin.serviceAccount }}
+      {{- end }}
+      containers:
+      - name: alfresco-activity-admin-container
+        image: {{ .Values.activityAdmin.image.registry }}/{{ .Values.activityAdmin.image.repository }}:{{ .Values.activityAdmin.image.tag }}
+        imagePullPolicy: {{ .Values.activityAdmin.imagePullPolicy | default "IfNotPresent" }}
+        {{- if .Values.activityAdmin.readinessProbe }}
+        readinessProbe:
+          {{ toYaml .Values.activityAdmin.readinessProbe | nindent 10 }}
+        {{- end }}
+        {{- if .Values.activityAdmin.livenessProbe }}
+        livenessProbe:
+          {{ toYaml .Values.activityAdmin.livenessProbe | nindent 10 }}
+        {{- end }}
+        lifecycle:
+          preStop:
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - sleep 20
+        envFrom:
+          - configMapRef:
+              name: alfresco-activity-admin-configmap
+          - secretRef:
+              name: db-secret
+          {{- if .Values.activityAdmin.envFrom }}
+          {{ toYaml .Values.activityAdmin.envFrom | nindent 10 }}
+          {{- end }}
+        ports:
+          - containerPort: 8080
+            protocol: TCP
+          - containerPort: 5701
+            protocol: TCP
+          - containerPort: 8443
+            protocol: TCP
+        {{- if or (.Values.activityAdmin.resources.requests) ((.Values.activityAdmin.resources.limits)) }}
+        resources:
+          {{- if .Values.activityAdmin.resources.requests }}
+            requests:
+            {{ toYaml .Values.activityAdmin.resources.requests | nindent 14 }}
+          {{- end }}
+          {{- if .Values.activityAdmin.resources.limits }}
+            limits:
+            {{ toYaml .Values.activityAdmin.resources.limits | nindent 14 }}
+          {{- end }}
+        {{- end }}
+        volumeMounts:
+        {{- if .Values.persistentStorage.alfresco.enabled }}
+          - name: data
+            mountPath: /opt/alfresco/alf_data
+            subPath: alfresco/data
+        {{- end }}
+        {{- if .Values.persistentStorage.alfresco.additionalClaims }}
+        {{- range .Values.persistentStorage.alfresco.additionalClaims }}
+          - name: {{ .name }}
+            mountPath: {{ .mountPath }}
+            subPath: {{ .subPath }}
+        {{- end }}
+        {{- end }}
+        {{- if .Values.activityAdmin.additionalVolumeMounts }}
+        {{- toYaml .Values.activityAdmin.additionalVolumeMounts | nindent 10 }}
+        {{- end }}
+      volumes:
+      {{- if .Values.persistentStorage.activityAdmin.additionalClaims }}
+      {{- range .Values.persistentStorage.activityAdmin.additionalClaims }}
+        - name: {{ .name }}
+          persistentVolumeClaim:
+            claimName: {{ .name }}-pvc
+      {{- end }}
+      {{- end }}
+      {{- if .Values.activityAdmin.additionalVolumes }}
+        {{ toYaml .Values.activityAdmin.additionalVolumes | nindent 8 }}
+      {{- end }}
+      imagePullSecrets:
+        {{- if .Values.general.imagePullSecrets}}
+        {{ toYaml .Values.general.imagePullSecrets | nindent 8 }}
+        {{- end }}
+        {{- if .Values.activityAdmin.imagePullSecrets}}
+        {{ toYaml .Values.activityAdmin.imagePullSecrets | nindent 8 }}
+        {{- end }}
