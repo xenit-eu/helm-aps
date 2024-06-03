@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: activiti
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    app: activiti
+spec:
+  replicas: {{ .Values.activiti.replicas }}
+  selector:
+    matchLabels:
+      app: activiti
+  strategy:
+    {{- if eq .Values.activiti.strategy.type "Recreate" }}
+    type: {{ .Values.activiti.strategy.type }}
+    {{- else }}
+    {{ toYaml .Values.general.strategy | nindent 4 }}
+    {{- end }}
+  template:
+    metadata:
+      labels:
+        app: activiti
+      annotations:
+        checksum/activiti-config: {{ include (print $.Template.BasePath "/activiti/activiti-config.yaml") . | sha256sum }}
+        checksum/activiti-db-secret: {{ include (print $.Template.BasePath "/postgresql-activiti/postgresql-activiti-secret.yaml") . | sha256sum }}
+        {{- include "globalPodAnnotations" . | indent 8 }}
+        {{- if .Values.activiti.podAnnotations }}
+        {{ toYaml .Values.activiti.podAnnotations | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- if .Values.activiti.serviceAccount }}
+      serviceAccountName: {{ .Values.activiti.serviceAccount }}
+      {{- end }}
+      containers:
+      - name: activiti-container
+        image: {{ .Values.activiti.image.registry }}/{{ .Values.activiti.image.repository }}:{{ .Values.activiti.image.tag }}
+        imagePullPolicy: {{ .Values.activiti.imagePullPolicy | default "IfNotPresent" }}
+        {{- if .Values.activiti.readinessProbe }}
+        readinessProbe:
+          {{ toYaml .Values.activiti.readinessProbe | nindent 10 }}
+        {{- end }}
+        {{- if .Values.activiti.livenessProbe }}
+        livenessProbe:
+          {{ toYaml .Values.activiti.livenessProbe | nindent 10 }}
+        {{- end }}
+        lifecycle:
+          preStop:
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - sleep 20
+        envFrom:
+          - configMapRef:
+              name: activiti-configmap
+          - secretRef:
+              name: activiti-db-secret
+          {{- if .Values.activiti.envFrom }}
+          {{ toYaml .Values.activiti.envFrom | nindent 10 }}
+          {{- end }}
+        ports:
+          - containerPort: 8080
+            protocol: TCP
+        {{- if .Values.activiti.resources }}
+        resources:
+          {{ toYaml .Values.activiti.resources | nindent 12 }}
+        {{- end }}
+        volumeMounts:
+        {{- if .Values.activiti.license.enabled }}
+            - name: license
+              mountPath: {{ .Values.activiti.licensePath }}
+              subPath: activiti.lic
+              readOnly: true
+        {{- end }}
+        {{- if .Values.activiti.additionalVolumeMounts }}
+        {{- toYaml .Values.activiti.additionalVolumeMounts | nindent 10 }}
+        {{- end }}
+      volumes:
+        {{- if .Values.activiti.license.enabled }}
+        - name: license
+          secret:
+            defaultMode: 0444
+            secretName: activiti-license-secret
+        {{- end }}
+      {{- if .Values.activiti.additionalVolumes }}
+        {{ toYaml .Values.activity.additionalVolumes | nindent 8 }}
+      {{- end }}
+      imagePullSecrets:
+        {{- if .Values.general.imagePullSecrets}}
+        {{ toYaml .Values.general.imagePullSecrets | nindent 8 }}
+        {{- end }}
+        {{- if .Values.activiti.imagePullSecrets}}
+        {{ toYaml .Values.activiti.imagePullSecrets | nindent 8 }}
+        {{- end }}

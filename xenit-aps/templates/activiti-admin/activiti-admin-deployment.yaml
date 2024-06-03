@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: activiti-admin
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    app: activiti-admin
+spec:
+  replicas: {{ .Values.activitiAdmin.replicas }}
+  selector:
+    matchLabels:
+      app: activiti-admin
+  strategy:
+    {{- if eq .Values.activitiAdmin.strategy.type "Recreate" }}
+    type: {{ .Values.activitiAdmin.strategy.type }}
+    {{- else }}
+    {{ toYaml .Values.general.strategy | nindent 4 }}
+    {{- end }}
+  template:
+    metadata:
+      labels:
+        app: activiti-admin
+      annotations:
+        checksum/activiti-admin-config: {{ include (print $.Template.BasePath "/activiti-admin/activiti-admin-config.yaml") . | sha256sum }}
+        checksum/activiti-admin-db-secret: {{ include (print $.Template.BasePath "/postgresql-activiti-admin/postgresql-activiti-admin-secret.yaml") . | sha256sum }}
+        {{- include "globalPodAnnotations" . | indent 8 }}
+        {{- if .Values.activitiAdmin.podAnnotations }}
+        {{ toYaml .Values.activitiAdmin.podAnnotations | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- if .Values.activitiAdmin.serviceAccount }}
+      serviceAccountName: {{ .Values.activitiAdmin.serviceAccount }}
+      {{- end }}
+      containers:
+      - name: activiti-admin-container
+        image: {{ .Values.activitiAdmin.image.registry }}/{{ .Values.activitiAdmin.image.repository }}:{{ .Values.activitiAdmin.image.tag }}
+        imagePullPolicy: {{ .Values.activitiAdmin.imagePullPolicy | default "IfNotPresent" }}
+        {{- if .Values.activitiAdmin.readinessProbe }}
+        readinessProbe:
+          {{ toYaml .Values.activitiAdmin.readinessProbe | nindent 10 }}
+        {{- end }}
+        {{- if .Values.activitiAdmin.livenessProbe }}
+        livenessProbe:
+          {{ toYaml .Values.activitiAdmin.livenessProbe | nindent 10 }}
+        {{- end }}
+        lifecycle:
+          preStop:
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - sleep 20
+        envFrom:
+          - configMapRef:
+              name: activiti-admin-configmap
+          - secretRef:
+              name: activiti-admin-db-secret
+          {{- if .Values.activitiAdmin.envFrom }}
+          {{ toYaml .Values.activitiAdmin.envFrom | nindent 10 }}
+          {{- end }}
+        ports:
+          - containerPort: 8080
+            protocol: TCP
+        {{- if .Values.activitiAdmin.resources }}
+        resources:
+          {{ toYaml .Values.activitiAdmin.resources | nindent 10 }}
+        {{- end }}
+        volumeMounts:
+        {{- if .Values.activitiAdmin.additionalVolumeMounts }}
+        {{- toYaml .Values.activitiAdmin.additionalVolumeMounts | nindent 10 }}
+        {{- end }}
+      volumes:
+      {{- if .Values.activitiAdmin.additionalVolumes }}
+        {{ toYaml .Values.activitiAdmin.additionalVolumes | nindent 8 }}
+      {{- end }}
+      imagePullSecrets:
+        {{- if .Values.general.imagePullSecrets}}
+        {{ toYaml .Values.general.imagePullSecrets | nindent 8 }}
+        {{- end }}
+        {{- if .Values.activitiAdmin.imagePullSecrets}}
+        {{ toYaml .Values.activitiAdmin.imagePullSecrets | nindent 8 }}
+        {{- end }}

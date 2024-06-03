@@ -1,0 +1,73 @@
+{{- if .Values.postgresqlActiviti.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgresql-activiti
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    app: postgresql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgresql-activiti
+  strategy:
+    {{- if eq .Values.postgresqlActiviti.strategy.type "Recreate" }}
+    type: {{ .Values.postgresqlActiviti.strategy.type }}
+    {{- else }}
+    {{ toYaml .Values.general.strategy | nindent 4 }}
+    {{- end }}
+  {{- if .Values.postgresqlActiviti.serviceAccount }}
+  serviceAccountName: {{ .Values.postgresqlActiviti.serviceAccount }}
+  {{- end }}
+  template:
+    metadata:
+      labels:
+        app: postgresql-activiti
+      annotations:
+        checksum/postgresql-config: {{ include (print $.Template.BasePath "/postgresql-activiti/postgresql-activiti-config.yaml") . | sha256sum }}
+        checksum/activiti-db-secret: {{ include (print $.Template.BasePath "/postgresql-activiti/postgresql-activiti-secret.yaml") . | sha256sum }}
+        {{- include "globalPodAnnotations" . | indent 8 }}
+        {{- if .Values.postgresqlActiviti.podAnnotations }}
+        {{ toYaml .Values.postgresqlActiviti.podAnnotations | nindent 8 }}
+        {{- end }}
+    spec:
+      containers:
+      - name: postgresql-activiti-container
+        image: {{ .Values.postgresqlActiviti.image.registry }}/{{ .Values.postgresqlActiviti.image.repository }}:{{ .Values.postgresqlActiviti.image.tag }}
+        imagePullPolicy: {{ .Values.postgresqlActiviti.imagePullPolicy | default "IfNotPresent" }}
+        envFrom:
+          - configMapRef:
+              name: postgresql-activiti-configmap
+          - secretRef:
+              name: activiti-db-secret
+          {{- if .Values.postgresqlActiviti.envFrom }}
+          {{ toYaml .Values.postgresqlActiviti.envFrom | nindent 10 }}
+          {{- end }}
+        ports:
+          - containerPort: 5432
+            protocol: TCP
+        {{- if .Values.persistentStorage.postgresqlActiviti.enabled }}
+        volumeMounts:
+          - name: data
+            mountPath: /var/lib/postgresql/data
+            subPath: postgres/data
+        {{- end }}
+        {{- if  .Values.postgresqlActiviti.resources }}
+        resources:
+          {{ toYaml .Values.postgresqlActiviti.resources | nindent 10 }}
+        {{- end }}
+      imagePullSecrets:
+        {{- if .Values.general.imagePullSecrets}}
+        {{ toYaml .Values.general.imagePullSecrets | nindent 8 }}
+        {{- end }}
+        {{- if .Values.postgresqlActiviti.imagePullSecrets}}
+        {{ toYaml .Values.postgresqlActiviti.imagePullSecrets | nindent 8 }}
+        {{- end }}
+      {{- if .Values.persistentStorage.postgresqlActiviti.enabled }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: postgresql-activiti-pvc
+      {{- end }}
+{{- end }}

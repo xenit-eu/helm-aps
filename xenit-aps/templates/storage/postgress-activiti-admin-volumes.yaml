@@ -1,7 +1,7 @@
 {{- $namespace := .Release.Namespace -}}
-{{- with .Values.persistentStorage.postgres }}
+{{- with .Values.persistentStorage.postgresqlActivitiAdmin }}
 {{- if .enabled}}
-{{- $name := "postgres" -}}
+{{- $name := "postgresql-activiti-admin" -}}
 {{- $storageClassName := .storageClassName -}}
 {{- $storage := .storage -}}
 {{- $efsVolumeHandle := .efs.volumeHandle -}}

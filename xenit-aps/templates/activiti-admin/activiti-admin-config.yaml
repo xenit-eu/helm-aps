@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: activiti-admin-configmap
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    app: activiti-admin
+data:
+  {{- if .Values.activitiAdmin.additionalEnvironmentVariables }}
+  {{ toYaml .Values.activitiAdmin.additionalEnvironmentVariables | nindent 2 }}
+  {{- end }}

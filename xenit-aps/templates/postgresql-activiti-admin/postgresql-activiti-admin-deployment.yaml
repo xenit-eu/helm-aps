@@ -1,0 +1,73 @@
+{{- if .Values.postgresqlActivitiAdmin.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgresql-activiti-admin
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    app: postgresql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgresql-activiti-admin
+  strategy:
+    {{- if eq .Values.postgresqlActivitiAdmin.strategy.type "Recreate" }}
+    type: {{ .Values.postgresqlActivitiAdmin.strategy.type }}
+    {{- else }}
+    {{ toYaml .Values.general.strategy | nindent 4 }}
+    {{- end }}
+  {{- if .Values.postgresqlActivitiAdmin.serviceAccount }}
+  serviceAccountName: {{ .Values.postgresqlActivitiAdmin.serviceAccount }}
+  {{- end }}
+  template:
+    metadata:
+      labels:
+        app: postgresql-activiti-admin
+      annotations:
+        checksum/postgresql-config: {{ include (print $.Template.BasePath "/postgresql-activiti-admin/postgresql-activiti-admin-config.yaml") . | sha256sum }}
+        checksum/activiti-admin-db-secret: {{ include (print $.Template.BasePath "/postgresql-activiti-admin/postgresql-activiti-admin-secret.yaml") . | sha256sum }}
+        {{- include "globalPodAnnotations" . | indent 8 }}
+        {{- if .Values.postgresqlActivitiAdmin.podAnnotations }}
+        {{ toYaml .Values.postgresqlActivitiAdmin.podAnnotations | nindent 8 }}
+        {{- end }}
+    spec:
+      containers:
+      - name: postgresql-activiti-admin-container
+        image: {{ .Values.postgresqlActivitiAdmin.image.registry }}/{{ .Values.postgresqlActivitiAdmin.image.repository }}:{{ .Values.postgresqlActivitiAdmin.image.tag }}
+        imagePullPolicy: {{ .Values.postgresqlActivitiAdmin.imagePullPolicy | default "IfNotPresent" }}
+        envFrom:
+          - configMapRef:
+              name: postgresql-activiti-admin-configmap
+          - secretRef:
+              name: activiti-admin-db-secret
+          {{- if .Values.postgresqlActivitiAdmin.envFrom }}
+          {{ toYaml .Values.postgresqlActivitiAdmin.envFrom | nindent 10 }}
+          {{- end }}
+        ports:
+          - containerPort: 5432
+            protocol: TCP
+        {{- if .Values.persistentStorage.postgresqlActivitiAdmin.enabled }}
+        volumeMounts:
+          - name: data
+            mountPath: /var/lib/postgresql/data
+            subPath: postgres/data
+        {{- end }}
+        {{- if  .Values.postgresqlActivitiAdmin.resources }}
+        resources:
+          {{ toYaml .Values.postgresqlActivitiAdmin.resources | nindent 10 }}
+        {{- end }}
+      imagePullSecrets:
+        {{- if .Values.general.imagePullSecrets}}
+        {{ toYaml .Values.general.imagePullSecrets | nindent 8 }}
+        {{- end }}
+        {{- if .Values.postgresqlActivitiAdmin.imagePullSecrets}}
+        {{ toYaml .Values.postgresqlActivitiAdmin.imagePullSecrets | nindent 8 }}
+        {{- end }}
+      {{- if .Values.persistentStorage.postgresqlActivitiAdmin.enabled }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: postgresql-activiti-admin-pvc
+      {{- end }}
+{{- end }}
