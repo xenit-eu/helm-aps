@@ -1,0 +1,18 @@
+{{- if .Values.postgresqlActivitiAdmin.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgresql-activiti-admin-service
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    {{- if .Values.postgresqlActivitiAdmin.serviceAnnotations }}
+    {{ toYaml .Values.postgresqlActivitiAdmin.serviceAnnotations | nindent 4 }}
+    {{- end }}
+spec:
+  selector:
+    app: postgresql-activiti-admin
+  ports:
+      - protocol: TCP
+        port: 5432
+        targetPort: 5432
+{{- end }}

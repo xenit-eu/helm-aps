@@ -8,7 +8,7 @@ import java.nio.file.Files;
 import org.junit.jupiter.api.Test;
 
 
-class HelmAlfrescoTest {
+class HelmActivitiTest {
 
     @Test
     void smallSetup() throws IOException {
@@ -30,29 +30,10 @@ class HelmAlfrescoTest {
                         """;
 
         var values = """
-                general:
-                  cni: kindnetd
                 ingress:
                   host: test
                   protocol: http
                   kubernetes.io/ingress.class: {}
-                acs:
-                  replicas: 1
-                  resources:
-                    requests:
-                      memory: "2Gi"
-                      cpu: "0"
-                mq:
-                  resources:
-                    requests:
-                      memory: "1Gi"
-                      cpu: "0"
-                solr:
-                  enabled: false
-                transformServices:
-                  enabled: false
-                digitalWorkspace:
-                  enabled: false
                 """;
 
         var clusterProvisioner = new KindClusterProvisioner();
@@ -69,12 +50,12 @@ class HelmAlfrescoTest {
             var helmCommander = new HelmCommander(cluster);
             var namespace = "mynamespace";
             helmCommander.commandAndPrint("install",
-                    "testinstall", "../xenit-alfresco",
+                    "testinstall", "../xenit-aps",
                     "-f", tempFile.toAbsolutePath().toString(),
                     "-n", namespace, "--create-namespace");
 
-            PodTests.checkPodsReady(cluster, namespace, "app = acs", 1, 300);
-            PodTests.checkPodsReady(cluster, namespace, "app = share", 1, 300);
+            PodTests.checkPodsReady(cluster, namespace, "app = activiti", 1, 600);
+            PodTests.checkPodsReady(cluster, namespace, "app = activiti-admin", 1, 600);
         } finally {
             if (cluster != null) {
                 cluster.destroy();

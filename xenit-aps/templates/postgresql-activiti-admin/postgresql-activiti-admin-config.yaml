@@ -1,0 +1,15 @@
+{{- if .Values.postgresqlActivitiAdmin.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgresql-activiti-admin-configmap
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    app: postgresql-activiti-admin
+data:
+  POSTGRES_DB: 'activiti-admin'
+  RELEASE_NAME: postgresql-activiti-admin
+  {{- if .Values.postgresqlActivitiAdmin.additionalEnvironmentVariables }}
+  {{ toYaml .Values.postgresqlActivitiAdmin.additionalEnvironmentVariables | nindent 2 }}
+  {{- end }}
+{{- end }}

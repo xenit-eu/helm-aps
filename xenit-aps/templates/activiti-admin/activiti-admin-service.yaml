@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: activiti-admin-service
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    {{- if .Values.activitiAdmin.serviceAnnotations }}
+    {{ toYaml .Values.activitiAdmin.serviceAnnotations | nindent 4 }}
+    {{- end }}
+spec:
+  selector:
+    app: activiti-admin
+  ports:
+      - name: 'activiti-admin'
+        protocol: TCP
+        port: 30100
+        targetPort: 8080
+  {{- if .Values.general.serviceType }}
+  type: {{ .Values.general.serviceType }}
+  {{- end }}
