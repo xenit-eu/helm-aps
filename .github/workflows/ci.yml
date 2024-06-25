@@ -54,4 +54,4 @@ jobs:
           format: 'helm'
           owner: 'xenit'
           repo: 'open-source'
-          file: 'aps-${{ env.version }}.tgz'
+          file: 'activiti-${{ env.version }}.tgz'
