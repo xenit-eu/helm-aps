@@ -24,7 +24,7 @@ Or you can use it as a dependency in your `requirements.yaml` in your own chart.
 
 ```yaml
 dependencies:
-  - name: aps
+  - name: activiti
     version: 0.0.1
     repository: https://repo.xenit.eu/public/open-source/helm/charts/
 ```
@@ -187,7 +187,7 @@ data:
 
 * Required: true
 * Default: None
-* Description: The host that points to the alfresco cluster for all services besides the syncService service
+* Description: The host that points to the alfresco cluster for all services
 
 #### `ingress.ingressAnnotations`
 
