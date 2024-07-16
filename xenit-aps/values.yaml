@@ -92,6 +92,7 @@ activiti:
     ACTIVITI_DATASOURCE_URL: "jdbc:postgresql://postgresql-activiti-service:5432/activiti?characterEncoding=UTF-8"
     ACTIVITI_HIBERNATE_DIALECT: "org.hibernate.dialect.PostgreSQLDialect"
 activitiAdmin:
+  enabled: true
   image:
     registry: 'docker.io'
     repository: 'alfresco/process-services-admin'
