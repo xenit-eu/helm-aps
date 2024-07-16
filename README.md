@@ -483,6 +483,11 @@ data:
   activiti on startup
 
 ### activiti-admin
+#### `activitiAdmin.enabled`
+
+* Required: false
+* Default: `true`
+* Description: Enable or disable the Activiti admin
 
 #### `activitiAdmin.replicas`
 
