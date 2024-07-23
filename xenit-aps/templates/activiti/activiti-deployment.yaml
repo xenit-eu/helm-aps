@@ -83,7 +83,7 @@ spec:
             secretName: activiti-license-secret
         {{- end }}
       {{- if .Values.activiti.additionalVolumes }}
-        {{ toYaml .Values.activity.additionalVolumes | nindent 8 }}
+        {{ toYaml .Values.activiti.additionalVolumes | nindent 8 }}
       {{- end }}
       imagePullSecrets:
         {{- if .Values.general.imagePullSecrets}}
