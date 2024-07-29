@@ -67,10 +67,10 @@ spec:
         {{- end }}
         volumeMounts:
         {{- if .Values.activiti.license.enabled }}
-            - name: license
-              mountPath: {{ .Values.activiti.license.path }}
-              subPath: activiti.lic
-              readOnly: true
+          - name: license
+            mountPath: {{ .Values.activiti.license.path }}
+            subPath: activiti.lic
+            readOnly: true
         {{- end }}
         {{- if .Values.activiti.additionalVolumeMounts }}
         {{- toYaml .Values.activiti.additionalVolumeMounts | nindent 10 }}
