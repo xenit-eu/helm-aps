@@ -2,7 +2,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ingress
+  name: aps-ingress
   namespace: {{ .Release.Namespace | quote }}
   annotations:
     {{- if .Values.ingress.ingressAnnotations}}
