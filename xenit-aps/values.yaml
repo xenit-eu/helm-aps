@@ -42,8 +42,7 @@ ingress:
   protocol: 'http'
   ingressAnnotations:
     kubernetes.io/ingress.class: "nginx"
-  defaultBackend:
-    mapToRootOnly: true
+  defaultPath:
     service: nginx-default-service
     port: 30403
   blockedPaths:
