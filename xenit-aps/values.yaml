@@ -56,7 +56,7 @@ activiti:
   image:
     registry: 'docker.io'
     repository: 'alfresco/process-services'
-    tag: '24.2.0'
+    tag: '24.5.0'
   strategy:
     type: RollingUpdate
   resources:
