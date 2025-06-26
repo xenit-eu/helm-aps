@@ -17,7 +17,7 @@ this to work:
 
 ```bash
 helm install activiti \
-  --repo 'https://repo.xenit.eu/public/open-source/helm/charts/'
+  --repo 'https://dl.cloudsmith.io/public/xenit/open-source/helm/charts/'
 ```
 
 Or you can use it as a dependency in your `requirements.yaml` in your own chart.
@@ -26,7 +26,7 @@ Or you can use it as a dependency in your `requirements.yaml` in your own chart.
 dependencies:
   - name: activiti
     version: 0.0.1
-    repository: https://repo.xenit.eu/public/open-source/helm/charts/
+    repository: https://dl.cloudsmith.io/public/xenit/open-source/helm/charts/
 ```
 
 ## Dev Requirements
