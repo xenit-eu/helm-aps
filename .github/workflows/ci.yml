@@ -47,7 +47,7 @@ jobs:
         run: helm package xenit-aps --version "${{ env.version }}"
       - name: publish to cloudsmith
         id: push
-        uses: cloudsmith-io/action@master
+        uses: cloudsmith-io/action@0ce83a3f1c773732df56cb025692c3fee5af9a41 # master
         with:
           api-key: ${{ secrets.CLOUDSMITH_APIKEY }}
           command: 'push'
